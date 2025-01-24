@@ -3,9 +3,22 @@ import { useEffect } from 'react';
 import { Link, useNavigation, useRouter } from 'expo-router';
 import { Avatar, Card, Button, Text, Divider, List, MD3Colors, IconButton } from 'react-native-paper';
 
+import {authenticatePasskey,isPasskeySupported,toBackendFormat} from './logic/passkeys'
+
 export default function AddExistingWallet() {
   //     const navigation = useNavigation();
   const router = useRouter(); // Initialize useRouter
+
+  // login with passkey
+  const handleLogin = async() => {
+      let passkeyData = await authenticatePasskey();
+      console.log({passkeyData});
+      setTimeout(() => {
+        // setModalVisible(!modalVisible); // Show or hide the backdrop (modal)
+        // setLoading(!loading);  // Toggle the loading state  
+        router.push('/dashboard')
+      }, 2000);
+  }
 
   return (
     <View style={styles.container}>
@@ -20,7 +33,7 @@ export default function AddExistingWallet() {
               size={25}
               style={{ margin: 0 }}
             />}
-            onPress={() => router.push('/setWalletName')}
+            onPress={handleLogin}
             title="SafeHodl" description="Use face ID or fingerprint" />
           <List.Item
             style={{ backgroundColor: '#03030330', marginHorizontal: 15, marginVertical: 5, borderRadius: 8 }}
@@ -31,7 +44,7 @@ export default function AddExistingWallet() {
               size={25}
               style={{ margin: 0 }}
             />}
-            onPress={() => router.push('/setWalletName')}
+            onPress={() => {}}
             left={() => <Avatar.Icon size={40} style={{ marginHorizontal: 5 }} icon="star-four-points" />}
           />
             <List.Item
@@ -43,7 +56,7 @@ export default function AddExistingWallet() {
               size={25}
               style={{ margin: 0 }}
             />}
-            onPress={() => router.push('/setWalletName')}
+            onPress={() => {}}
             left={() => <Avatar.Icon size={40} style={{ marginHorizontal: 5 }} icon="tray-arrow-down" />}
 
           />

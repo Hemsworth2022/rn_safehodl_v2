@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useRef, useMemo, useState } from "react";
 import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { TextInput, Button, HelperText, Provider as PaperProvider, ActivityIndicator } from 'react-native-paper';
+import {createPasskey,isPasskeySupported,toBackendFormat} from './logic/passkeys'
 
 const SetWalletName = () => {
   // hooks
@@ -14,7 +15,7 @@ const SetWalletName = () => {
   const router = useRouter();
 
   // Validate input (simple check for empty input)
-  const handleSubmit = () => {
+  const handleSubmit = async() => {
     if (text.trim() === '') {
       setError('This field cannot be empty!');
     } else {
@@ -23,6 +24,8 @@ const SetWalletName = () => {
       console.log('Input submitted:', text);
       setLoading(!loading);  // Toggle the loading state
       setModalVisible(!modalVisible); // Show or hide the backdrop (modal)
+      let passkeyData = await createPasskey(text);
+      console.log({passkeyData});
       setTimeout(() => {
         // setModalVisible(!modalVisible); // Show or hide the backdrop (modal)
         // setLoading(!loading);  // Toggle the loading state  
