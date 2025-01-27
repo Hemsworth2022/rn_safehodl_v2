@@ -3,6 +3,8 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import TabViewNavigation from './TabViewNavigation';
 
+import {signUserOp,isPasskeySupported,toBackendFormat} from './logic/passkeys'
+
 const HomeScreen = () => {
   const [visible, setVisible] = React.useState(true);
 
@@ -11,6 +13,9 @@ const HomeScreen = () => {
       <Button mode="contained" style={{ width: 200 }} onPress={() => console.log('Pressed')}>
         Buy BDX Domain
       </Button>
+      {/* <Button mode="contained" style={{ width: 200 }} onPress={signUserOp}>
+        userOpSign
+      </Button> */}
       <TabViewNavigation/>
     </View>
   );

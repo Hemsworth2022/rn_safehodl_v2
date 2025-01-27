@@ -25,7 +25,10 @@ const SetWalletName = () => {
       setLoading(!loading);  // Toggle the loading state
       setModalVisible(!modalVisible); // Show or hide the backdrop (modal)
       let passkeyData = await createPasskey(text);
-      console.log({passkeyData});
+      if (passkeyData) {
+        const publickData = await toBackendFormat(passkeyData);
+        console.log({publickData});
+      }
       setTimeout(() => {
         // setModalVisible(!modalVisible); // Show or hide the backdrop (modal)
         // setLoading(!loading);  // Toggle the loading state  
