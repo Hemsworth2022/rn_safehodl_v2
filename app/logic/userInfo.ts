@@ -31,6 +31,56 @@ const getEstimateAddress = async (rawId: any, publicKeys: any[]): Promise<any> =
     }
 };
 
+const fetchBalance = async(address:any): Promise<any> => {
+  console.log("Fetching balance for:", address);
+  const web3: Web3 = new Web3('https://bundler.beldex.dev/rpc');
+  if (web3.utils.isAddress(address)) {  // Validate address
+      try {
+          const balance = await web3.eth.getBalance(address);
+          const formattedBalance = web3.utils.fromWei(balance, "ether");
+          return formattedBalance;
+      } catch (error) {
+          console.error("Error fetching balance:", error);
+          throw error;
+      }
+  } else {
+      console.error("Invalid address:", address);
+      throw `Invalid address:", ${address}`;
+  }
+}
+
+const fetchERC20Balance = async (address: string, tokenAddress: string): Promise<any> => {
+  console.log("Fetching ERC20 balance for:", address, "on chain: Amoy", "Token of", tokenAddress);
+  const web3: Web3 = new Web3('https://bundler.beldex.dev/rpc');
+
+  // ABI for the ERC20 `balanceOf` method
+  const erc20ABI = [
+    {
+      constant: true,
+      inputs: [{ name: '_owner', type: 'address' }],
+      name: 'balanceOf',
+      outputs: [{ name: 'balance', type: 'uint256' }],
+      type: 'function',
+    },
+  ];
+
+  try {
+      // Validate the contract address
+      if (web3.utils.isAddress(tokenAddress)) {
+        const tokenContract = new web3.eth.Contract(erc20ABI, tokenAddress);
+        const balance = await tokenContract.methods.balanceOf(address).call();
+        const formattedBalance = Number(balance) / 10 ** 9;
+        return formattedBalance;
+      } else {
+        console.error("Invalid contract address:", tokenAddress);
+        return 0;
+      }
+  } catch (error) {
+    console.error("Error fetching ERC20 balance:", error);
+    return 0;
+  }
+};
+
 //TODO have to send arguments as object 
 const storePubkey = async (name:any, rawId:any, X:any, Y:any) =>{
     const payload = { name, rawId, X, Y};
@@ -91,6 +141,8 @@ export{
     PAYMASTER_ADDRESS,
     SECP256R1_VERIFIER,
     LOUICE_FACTORY,
+    fetchBalance,
+    fetchERC20Balance,
     storePubkey,
     getPubkeys,
     getEstimateAddress

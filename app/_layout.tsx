@@ -92,6 +92,14 @@ export default function RootLayout() {
         headerTintColor: 'black',
       }} />
 
+      <Stack.Screen name="transfer" options={{
+        title: 'TransferPage',
+        headerStyle: {
+          backgroundColor: 'white',
+        },
+        headerTintColor: 'black',
+      }} />
+
       <Stack.Screen name="setWalletName" options={{
         title: 'Set Wallet Name',
         headerStyle: {

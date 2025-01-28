@@ -9,6 +9,7 @@ const tokensData = [
   {
     "id": 1,
     "title": "BDX",
+    "type": "COIN",
     "description": "Bitcoin",
     "price": "$101,234",
     "percentageChange": "-0.14%",
@@ -18,6 +19,7 @@ const tokensData = [
   {
     "id": 2,
     "title": "ETH",
+    "type": "COIN",
     "description": "Ethereum",
     "price": "$3,200",
     "percentageChange": "+1.25%",
@@ -26,8 +28,10 @@ const tokensData = [
   },
   {
     "id": 3,
-    "title": "XRP",
-    "description": "Ripple",
+    "title": "POL",
+    "type": "COIN",
+    "tokenAddress":"",
+    "description": "Amoy",
     "price": "$0.89",
     "percentageChange": "-2.56%",
     "icon": "tray-arrow-down",
@@ -35,8 +39,10 @@ const tokensData = [
   },
   {
     "id": 4,
-    "title": "LTC",
-    "description": "Litecoin",
+    "title": "SAR",
+    "type": "TOKEN",
+    "tokenAddress": "0xF757Dd3123b69795d43cB6b58556b3c6786eAc13",
+    "description": "Sarvy",
     "price": "$120",
     "percentageChange": "+0.5%",
     "icon": "tray-arrow-up",
@@ -58,7 +64,7 @@ const FirstRoute = () => {
           onPress={() => {
             router.push({
                 pathname: '/cryptoDetails',
-                params: { title: item.title, subtitle: `COIN | ${item.title} Smart Chain` },
+                params: { title: item.title, subtitle: `COIN | ${item.title} Smart Chain` , type:item.type, tokenAddress:item.tokenAddress },
               });}}
           right={() => (
             <View>

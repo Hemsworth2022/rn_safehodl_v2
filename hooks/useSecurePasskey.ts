@@ -14,7 +14,7 @@ export function useSecureStore(key: string) {
     try {
       setIsLoading(true);
       const storedData = await SecureStore.getItemAsync(key);
-      console.log({storedData});
+      // console.log({storedData});
       if (storedData) {
         setData(storedData);
       }
@@ -28,7 +28,7 @@ export function useSecureStore(key: string) {
   const saveData = async (newData: string) => {
     try {
       await SecureStore.setItemAsync(key, newData);
-      console.log({newData});
+      // console.log({newData});
       setData(newData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save data");

@@ -7,16 +7,56 @@ import BottomDrawer from './BottomDrawer'
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import TradeChart from './TradeChart';
 
+import { useSecureStore } from "../hooks/useSecurePasskey";
+import { ACCOUNT_ADDRESS_STORAGE_KEY } from "../hooks/useSecurePasskey";
+import {fetchBalance, fetchERC20Balance} from './logic/userInfo'
+
 const CryptoDetails = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
+
+  const { data:address } = useSecureStore(
+    ACCOUNT_ADDRESS_STORAGE_KEY
+  );
+  const [balance, setBalance] = React.useState<number>(0);
+
+  //Fetching the balance
+  React.useEffect(() => {
+    // console.log('fetching balance for user address',address,params.tokenAddress)
+      if (!address || !params) return;
+      
+      const balance = async (address:string) => {
+          var fetchedBalance = 0;
+          if (params.type === "COIN")
+              fetchedBalance = await fetchBalance(address);
+          else
+              fetchedBalance = await fetchERC20Balance(address, Array.isArray(params.tokenAddress) ? params.tokenAddress[0] : params.tokenAddress);
+          
+          setBalance(fetchedBalance);
+          console.log({fetchedBalance});
+      };
+
+      balance(address);  // Fetch conBalance immediately on address change
+
+      // Start the interval to fetch conBalance every 5 seconds
+      const intervalId = setInterval(() => {
+          balance(address);
+      }, 10000);  // Set interval for conBalance updates
+
+      // Cleanup interval on address change or component unmount
+      return () => {
+          if (intervalId) {
+              clearInterval(intervalId);
+          }
+      };
+  }, [address,params]);
 
   return (
     <View style={styles.wrappercontainer}>
       <View style={styles.container}>
         <View style={{ margin: 5, backgroundColor: '#f3f3f3', borderRadius: 10, width: 'auto', height: 100, borderStyle: 'solid', borderColor: '#333', borderWidth: 1 }}>
           <Text variant='titleLarge' style={{ textAlign: 'center', paddingTop: 20 }}>{params.title}</Text>
-          <Text variant='titleMedium' style={{ textAlign: 'center', paddingTop: 4, fontWeight: 500 }}>$0.00</Text>
+          <Text variant='titleMedium' style={{ textAlign: 'center', paddingTop: 4, fontWeight: 500 }}>{balance}</Text>
 
         </View>
         <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10 }}>
@@ -27,7 +67,10 @@ const CryptoDetails = () => {
               animated={true}
               size={30}
               mode="contained-tonal"
-              onPress={() => router.push("/send")}
+              onPress={() => router.push({
+                pathname:"/send",
+                params:{balance:balance.toString(),currentCoin:JSON.stringify(params)}
+              })}
             />
             <Text variant='labelLarge' style={{ textAlign: 'center' }}>Send</Text>
           </View>
