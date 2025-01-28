@@ -2,12 +2,16 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useSecureStore } from "../hooks/useSecurePasskey";
 import { ACCOUNT_ADDRESS_STORAGE_KEY } from "../hooks/useSecurePasskey";
+import { useLocalSearchParams } from 'expo-router';
 
 const TransferPage: React.FC = () => {
   const { data: address } = useSecureStore(ACCOUNT_ADDRESS_STORAGE_KEY);
-
+  const {toAddress,amount,currentAsset,balance} = useLocalSearchParams();
+   const currentAssetJson = JSON.parse(currentAsset.toString());
   const handleSubmit = () => {
     console.log("Submit button pressed!");
+    console.log(currentAssetJson.tokenAddress);
+    console.log(currentAssetJson.type);
     // Add your submit functionality here
   };
 
@@ -16,11 +20,11 @@ const TransferPage: React.FC = () => {
       <Text style={styles.heading}>Transfer Details</Text>
       <View style={styles.card}>
         <Text style={styles.label}>Amount:</Text>
-        <Text style={styles.value}>POL</Text>
+        <Text style={styles.value}>{amount} {currentAssetJson.title}</Text>
       </View>
       <View style={styles.card}>
         <Text style={styles.label}>Asset:</Text>
-        <Text style={styles.value}>POL</Text>
+        <Text style={styles.value}>{currentAssetJson.title}</Text>
       </View>
       <View style={styles.card}>
         <Text style={styles.label}>From Address:</Text>
@@ -28,7 +32,7 @@ const TransferPage: React.FC = () => {
       </View>
       <View style={styles.card}>
         <Text style={styles.label}>To Address:</Text>
-        <Text style={styles.value}>300</Text>
+        <Text style={styles.value}>{toAddress}</Text>
       </View>
       <View style={styles.card}>
         <Text style={styles.label}>Network Fee:</Text>
@@ -94,3 +98,5 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
 });
+
+export default TransferPage;

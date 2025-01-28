@@ -15,7 +15,7 @@ const SendScreen = () => {
         console.log("Handle next is clicked")
         router.push({ 
             pathname: '/transfer',
-            params:{toAddress:toAddress,amount:amount,currentAsset:params.currentCoin,balance:params.balance}
+            params:{toAddress:toAddress,amount:amount,currentAsset:params.currentAsset,balance:params.balance}
 
         });
     }

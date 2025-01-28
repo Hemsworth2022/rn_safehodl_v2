@@ -69,7 +69,7 @@ const CryptoDetails = () => {
               mode="contained-tonal"
               onPress={() => router.push({
                 pathname:"/send",
-                params:{balance:balance.toString(),currentCoin:JSON.stringify(params)}
+                params:{balance:balance.toString(),currentAsset:JSON.stringify(params)}
               })}
             />
             <Text variant='labelLarge' style={{ textAlign: 'center' }}>Send</Text>
