@@ -1,26 +1,47 @@
-import React from 'react';
+import React,{useEffect,useState} from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { CommonActions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, BottomNavigation, Appbar, Avatar, TextInput, Searchbar } from 'react-native-paper';
+import { Text, BottomNavigation, Appbar, Avatar, TextInput, Searchbar,Button } from 'react-native-paper';
 import HomeScreen from './HomeScreen';
 import DiscoverScreen from './DiscoverScreen'
-import { useRouter } from 'expo-router';
+import { useRouter,useLocalSearchParams } from 'expo-router';
 
+import {getEstimateAddress} from './logic/userInfo'
 
 const Tab = createBottomTabNavigator();
 
 export default function MyComponent() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const router = useRouter();
+  const params = useLocalSearchParams();
+
+  const [address, setAddress] = useState('');
+
+  useEffect(() => {
+    if (!params.rawId || !params.x || !params.y) return;
+    console.log('Fetching estimated address...', params.userName);
+
+    const fetchContractAddress = async () => {
+      try {
+          const estimateAddress = await getEstimateAddress(params.rawId, [params.x, params.y]);
+          console.log({estimateAddress});
+          setAddress(estimateAddress);
+      } catch (error) {
+          console.error('Error fetching contract address:', error);
+      }
+    };
+    fetchContractAddress();
+  },[params.rawId]);
+
   return (
     <View style={{ flex: 1 }}>
       <Appbar.Header style={styles.appbar}>
         <Appbar.Action icon="cog" onPress={() => { router.push('/') }} />
 
         <View style={styles.titleContainer}>
-          <Text style={styles.appbarTitle}>Home</Text>
+          <Text style={styles.appbarTitle}>{params.userName}</Text>
         </View>
 
         <Appbar.Action icon="bell-circle" onPress={() => { }} />

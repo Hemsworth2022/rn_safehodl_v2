@@ -3,6 +3,8 @@ import React, { useCallback, useRef, useMemo, useState } from "react";
 import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { TextInput, Button, HelperText, Provider as PaperProvider, ActivityIndicator } from 'react-native-paper';
 import {createPasskey,isPasskeySupported,toBackendFormat} from './logic/passkeys'
+import {storePubkey} from './logic/userInfo'
+import { parse } from "@babel/core";
 
 const SetWalletName = () => {
   // hooks
@@ -25,14 +27,19 @@ const SetWalletName = () => {
       setLoading(!loading);  // Toggle the loading state
       setModalVisible(!modalVisible); // Show or hide the backdrop (modal)
       let passkeyData = await createPasskey(text);
+      let publickDataJson:any;
       if (passkeyData) {
         const publickData = await toBackendFormat(passkeyData);
-        console.log({publickData});
+        publickDataJson = JSON.parse(publickData);
+        const response = await storePubkey(text, publickDataJson['rawId'],publickDataJson['pubkeyCoordinates']['x'], publickDataJson['pubkeyCoordinates']['y'])
       }
       setTimeout(() => {
         // setModalVisible(!modalVisible); // Show or hide the backdrop (modal)
         // setLoading(!loading);  // Toggle the loading state  
-        router.push('/dashboard')
+        router.push({
+          pathname: '/dashboard',
+          params: { userName: text, rawId: publickDataJson['rawId'], x: publickDataJson['pubkeyCoordinates']['x'],  y: publickDataJson['pubkeyCoordinates']['y']},
+        })
       }, 2000);
     }
   };

@@ -4,6 +4,7 @@ import { Link, useNavigation, useRouter } from 'expo-router';
 import { Avatar, Card, Button, Text, Divider, List, MD3Colors, IconButton } from 'react-native-paper';
 
 import {authenticatePasskey,isPasskeySupported,toBackendFormat} from './logic/passkeys'
+import {getPubkeys} from './logic/userInfo'
 
 export default function AddExistingWallet() {
   //     const navigation = useNavigation();
@@ -12,12 +13,14 @@ export default function AddExistingWallet() {
   // login with passkey
   const handleLogin = async() => {
       let passkeyData = await authenticatePasskey();
-      console.log({passkeyData});
-      setTimeout(() => {
-        // setModalVisible(!modalVisible); // Show or hide the backdrop (modal)
-        // setLoading(!loading);  // Toggle the loading state  
-        router.push('/dashboard')
-      }, 2000);
+      if(passkeyData){
+        console.log(passkeyData.rawId);
+        const publicKeyResponse = await getPubkeys(passkeyData.rawId);
+        router.push({
+          pathname: '/dashboard',
+          params: {userName: publicKeyResponse.data.name, rawId: publicKeyResponse.data.rawId, x: publicKeyResponse.data.pubkeyX,  y: publicKeyResponse.data.pubkeyY},
+        })
+      }
   }
 
   return (

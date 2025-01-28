@@ -1,5 +1,6 @@
 import { registerRootComponent } from 'expo';
-
+import "react-native-crypto";
+global.crypto = require("crypto");
 import App from './app';
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
