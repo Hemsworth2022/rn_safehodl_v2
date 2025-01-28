@@ -8,16 +8,23 @@ import HomeScreen from './HomeScreen';
 import DiscoverScreen from './DiscoverScreen'
 import { useRouter,useLocalSearchParams } from 'expo-router';
 
+import {
+  ACCOUNT_ADDRESS_STORAGE_KEY,
+  PASSKEY_STORAGE_KEY,
+  useSecureStore,
+} from "../hooks/useSecurePasskey";
 import {getEstimateAddress} from './logic/userInfo'
 
 const Tab = createBottomTabNavigator();
 
 export default function MyComponent() {
+  const { saveData:saveAccountAddress, removeData: removeAccountAddress } = useSecureStore(
+    ACCOUNT_ADDRESS_STORAGE_KEY
+  );
+
   const [searchQuery, setSearchQuery] = React.useState('');
   const router = useRouter();
   const params = useLocalSearchParams();
-
-  const [address, setAddress] = useState('');
 
   useEffect(() => {
     if (!params.rawId || !params.x || !params.y) return;
@@ -27,7 +34,7 @@ export default function MyComponent() {
       try {
           const estimateAddress = await getEstimateAddress(params.rawId, [params.x, params.y]);
           console.log({estimateAddress});
-          setAddress(estimateAddress);
+          saveAccountAddress(estimateAddress);
       } catch (error) {
           console.error('Error fetching contract address:', error);
       }

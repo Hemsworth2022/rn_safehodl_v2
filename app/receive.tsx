@@ -3,8 +3,13 @@ import { View, StyleSheet,  } from 'react-native';
 import { Button, IconButton, MD3Colors, Text } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
 
+import { useSecureStore } from "../hooks/useSecurePasskey";
+import { ACCOUNT_ADDRESS_STORAGE_KEY } from "../hooks/useSecurePasskey";
+
 export default function ReceiveScreen() {
-  const address = "0x8afB15D3797d9648c4c14a5A64C7b5FddcacA99F";
+  const { data:address } = useSecureStore(
+    ACCOUNT_ADDRESS_STORAGE_KEY
+  );
 
   return (
     <View style={styles.container}>
