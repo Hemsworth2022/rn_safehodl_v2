@@ -93,7 +93,7 @@ export default function RootLayout() {
       }} />
 
       <Stack.Screen name="transfer" options={{
-        title: 'TransferPage',
+        title: 'Transfer Details',
         headerStyle: {
           backgroundColor: 'white',
         },
