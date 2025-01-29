@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
+import { parse } from "@babel/core";
 
 export const PASSKEY_STORAGE_KEY = "user_passkey";
 export const ACCOUNT_ADDRESS_STORAGE_KEY = "account_address";
+export const HISTORY_STORAGE_KEY = "history";
 
 export function useSecureStore(key: string) {
   const [data, setData] = useState<string | undefined>();
@@ -36,6 +38,34 @@ export function useSecureStore(key: string) {
     }
   };
 
+  const saveHistoryData = async (newData: string) => {
+    try {
+      let history: string[] = [];
+
+      // Check if `data` exists and parse it
+      if (data) {
+        history = JSON.parse(data);
+      }
+  
+      // Ensure `history` is an array
+      if (!Array.isArray(history)) {
+        history = [];
+      }
+      console.log({data});
+      // Push new data to history
+      history.push(newData);
+      console.log({history});
+      // Store updated history as a JSON string
+      await SecureStore.setItemAsync(key, JSON.stringify(history));
+  
+      // Update state with the new history array
+      setData(JSON.stringify(history));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save data");
+      throw err;
+    }
+  };
+
   const removeData = async () => {
     try {
       await SecureStore.deleteItemAsync(key);
@@ -56,6 +86,7 @@ export function useSecureStore(key: string) {
     isLoading,
     error,
     saveData,
+    saveHistoryData,
     removeData,
     loadData,
   };

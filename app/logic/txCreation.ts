@@ -17,6 +17,8 @@ import {fetchERC20Balance} from './userInfo';
 import Entrypoint from '../abi/entrypoint.json';
 import TransactionAbi from '../abi/TransactionAbi.json'
 
+import {signUserOp} from './passkeys'
+
 type TokenKey =  {name: string; symbol: string; type: string; decimals: number; address: string };
 
 export type UserOperation = {
@@ -45,7 +47,7 @@ async function getChainDetails(web3: Web3) {
   
     const chainType = chainIdandType[hexChainID] as keyof typeof chainInfo;
     console.log({chainType});
-    const userOpProvider = new ethers.providers.JsonRpcProvider(
+    const userOpProvider = new ethers.JsonRpcProvider(
       chainInfo[chainType].USER_OP_RPC_URL
     );
     console.log({userOpProvider});
@@ -83,7 +85,7 @@ async function getSenderAddress(entryContract: any, initCode: HexString): Promis
         }
     }
     
-    return ethers.utils.getAddress(sender);
+    return ethers.getAddress(sender);
   }
 
 const estimateUserOperationGas = async (web3:any, userOp:any) => {
@@ -188,13 +190,12 @@ async function getSponserFromPaymaster(userOp:any, ERC20_contract:HexString) {
 export const signAndSubmitUserOp = async(web3:any, rawId:string, userOp:UserOperation) => {
     const {entryContract} = await getChainDetails(web3);
 
-    const userOpHash = await entryContract.methods.getUserOpHash(userOp).call();
+    const userOpHash:string = await entryContract.methods.getUserOpHash(userOp).call();
     console.log({ userOpHash });
 
-    userOp.signature = await personalSignIn(userOpHash, rawId);
-
+    userOp.signature = await signUserOp(userOpHash, rawId);
     console.log({ userOp });
-    return;
+
     const OpHash = await sendUserOperation(web3, userOp);
     if (await isApiResponseError(OpHash))
         return { error: true, message:OpHash?.error?.message || "Failed to send user operation."  };

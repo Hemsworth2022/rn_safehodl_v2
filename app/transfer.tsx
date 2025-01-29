@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { useSecureStore } from "../hooks/useSecurePasskey";
-import { ACCOUNT_ADDRESS_STORAGE_KEY, PASSKEY_STORAGE_KEY } from "../hooks/useSecurePasskey";
-import { useLocalSearchParams } from 'expo-router';
+import { ACCOUNT_ADDRESS_STORAGE_KEY, PASSKEY_STORAGE_KEY,HISTORY_STORAGE_KEY } from "../hooks/useSecurePasskey";
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Web3, { HexString } from 'web3'; // Ensure Web3.js is correctly imported
 import { Button } from 'react-native-paper';
 import { feeTokens } from '../token/feeTokens';
 import { coinList } from "../token/coinList";
-import { createUserOpETHTx, createUserOpERC20Tx, UserOperation, getUserOperationByHash } from './logic/txCreation'
+import { createUserOpETHTx, createUserOpERC20Tx, UserOperation,signAndSubmitUserOp, getUserOperationByHash } from './logic/txCreation'
 
 const TransferPage: React.FC = () => {
-  const { data: address } = useSecureStore(ACCOUNT_ADDRESS_STORAGE_KEY);
-  const { data: passkeyData } = useSecureStore(PASSKEY_STORAGE_KEY);
+  const router = useRouter()
   const { toAddress, amount, currentAsset, balance } = useLocalSearchParams();
   const currentAssetJson = JSON.parse(currentAsset.toString());
 
+  // Storage keys
+  const { data: address } = useSecureStore(ACCOUNT_ADDRESS_STORAGE_KEY);
+  const { data: passkeyData } = useSecureStore(PASSKEY_STORAGE_KEY);
+  const [historyKey, setHistoryKey] = useState(HISTORY_STORAGE_KEY);
+  const { saveHistoryData: saveHistory } = useSecureStore(historyKey);
+  useEffect(() => {
+    if (address) {
+      setHistoryKey(`${HISTORY_STORAGE_KEY}_${address}`);
+    }
+  }, [address]);
+
+  // Transaction indos
   const [open, setOpen] = useState<boolean>(false); // State to control the dropdown open/close
   const [feeType, setFeeType] = useState<string>('Amoy'); // Default currency
   const [feeAsset, setFeeAsset] = useState<{ name: string; symbol: string; type: string; decimals: number; address: string }>();
@@ -26,7 +37,7 @@ const TransferPage: React.FC = () => {
   const [isBalanceOk, setIsBalanceOk] = useState<boolean>(false);
   const [userOp, setUserOp] = useState<UserOperation>();
   const [visible, setVisible] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<any>({ label: 'POL', value: 'Amoy' });
   // const data = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
   const data = [
     { label: 'POL', value: 'Amoy' },
@@ -98,12 +109,48 @@ const TransferPage: React.FC = () => {
     getUserOperation();
   }, [feeAsset, address, passkeyData]);
 
+  // Sign and Submit the UserOp
   const handleSubmit = async () => {
     console.log("Submit button pressed!");
     console.log(currentAssetJson.tokenAddress);
     console.log(currentAssetJson.type);
     console.log(feeType);
     // Add your submit functionality here
+    if(!userOp || !passkeyData)
+        return;
+    
+    const web3: Web3 = new Web3('https://bundler.beldex.dev/rpc');
+    const response = await signAndSubmitUserOp(web3, JSON.parse(passkeyData).rawId, userOp);
+    if (!response.error) {
+        console.log('getUserOperationByHash function calling ...');
+        for (let i = 0; true; i++) {
+            const res = await getUserOperationByHash(web3, response.opHash);
+            const result = res.result;
+            if (!(result === null) && result.status) {
+                console.log('Transaction status: ', result.status, result.transaction);
+
+                if (['OnChain', 'Cancelled', 'Reverted'].includes(result.status)) {
+                    if (result.status === 'Cancelled' || result.status === 'Reverted') {
+                        // handleError(`Transaction is ${result.status}. Try again later`);
+                    } else {
+                        console.log('Transaction completed successfully.');
+                        saveHistory(result.transaction);
+                        router.push({
+                            pathname: '/cryptoDetails',
+                            params: { title: currentAssetJson.title, subtitle: `COIN | ${currentAssetJson.title} Smart Chain` , type:currentAssetJson.type, tokenAddress:currentAssetJson.tokenAddress },
+                          });
+                    }
+                    // await handleAddTransaction(result.status, result);
+                    break;
+                }
+            }
+
+            // Wait for a specified delay before retrying
+            await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+    }else{
+        console.error(response.message);
+    }
 
   };
 
@@ -165,7 +212,7 @@ const TransferPage: React.FC = () => {
                 }}>
                 <FlatList
                   data={data}
-                  keyExtractor={(item) => item.label}
+                  keyExtractor={(item) => item.value}
                   renderItem={({ item }) => (
                     <TouchableOpacity onPress={() => handleSelect(item)}>
                       <Text style={{ padding: 10, fontSize: 16 }}>{item.label}</Text>

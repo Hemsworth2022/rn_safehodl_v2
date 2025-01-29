@@ -1,14 +1,14 @@
 
 import { Text, BottomNavigation, Appbar, Avatar, IconButton, Provider as PaperProvider, Button, Icon, MD3Colors, Divider, Provider } from 'react-native-paper';
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, FlatList, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import BottomDrawer from './BottomDrawer'
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import TradeChart from './TradeChart';
 
 import { useSecureStore } from "../hooks/useSecurePasskey";
-import { ACCOUNT_ADDRESS_STORAGE_KEY } from "../hooks/useSecurePasskey";
+import { ACCOUNT_ADDRESS_STORAGE_KEY,HISTORY_STORAGE_KEY } from "../hooks/useSecurePasskey";
 import {fetchBalance, fetchERC20Balance} from './logic/userInfo'
 
 const CryptoDetails = () => {
@@ -19,6 +19,10 @@ const CryptoDetails = () => {
     ACCOUNT_ADDRESS_STORAGE_KEY
   );
   const [balance, setBalance] = React.useState<number>(0);
+
+  // History for the user
+  const [historyKey, setHistoryKey] = React.useState(HISTORY_STORAGE_KEY);
+  const { data: historyData, loadData:loadHistoryData } = useSecureStore(historyKey);
 
   //Fetching the balance
   React.useEffect(() => {
@@ -50,6 +54,24 @@ const CryptoDetails = () => {
           }
       };
   }, [address,params]);
+
+  // Update history key and load history data
+  React.useEffect(() => {
+    if (address) {
+      const newHistoryKey = `${HISTORY_STORAGE_KEY}_${address}`;
+      setHistoryKey(newHistoryKey);
+    }
+  }, [address]);
+
+  React.useEffect(() => {
+    console.log('loading History for ',historyKey)
+    loadHistoryData();
+  },[historyKey]);
+
+  const handleHistory = async () => {
+    console.log('historykey is', historyKey)
+    console.log('hisotry is ', historyData)
+  }
 
   return (
     <View style={styles.wrappercontainer}>
@@ -88,7 +110,10 @@ const CryptoDetails = () => {
         </View>
         <Divider bold={true} />
     
-    <View style={{ flex:1, height: '100%' }}></View>
+        <View style={{ flex:1, height: '100%' }}></View>
+      <Button mode="contained" style={{ width: 150 }} onPress={handleHistory}>
+        History
+      </Button>
       </View>
       <BottomDrawer title={params.title} />
     </View>

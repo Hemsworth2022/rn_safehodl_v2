@@ -1,5 +1,6 @@
 import { Buffer } from "buffer";
-import { ethers } from "ethers";
+import { ethers, AbiCoder } from "ethers";
+const abiCoder = new AbiCoder();
 import { randomBytes } from 'react-native-randombytes';
 import {
   Passkey,
@@ -279,24 +280,19 @@ function extractClientDataFields(
 }
 
 /**
- * SignUserOp for sending the transaction
+ * SignUserOp
  */ 
-// async function signUserOp(
-//     userOp: UserOperationV6,
-//     passkeyData: PasskeyLocalStorageFormat
-// ) 
-async function signUserOp(){
-    // console.log(passkeyData, "passkeyData");
-
-    const userOpHash:string = "0x71c60dda15d76ffe4a374979e95c3f8fff6e41097b62e0382722ae3c1314d0a5";
-    // const userOpHash = await entryContract.methods.getUserOpHash(userOp).call();
-    console.log({ userOpHash });
+async function signUserOp(
+  userOpHash:string,
+  rawId:string
+){
+    console.log({userOpHash});
     const challenge = bufferToBase64URLString(ethers.getBytes(userOpHash));
     let assertion = await Passkey.get({
         rpId: rp.id,
         challenge: challenge,
         userVerification: "required",
-        allowCredentials: [{ id: "gX71vmVAlPYdo22RekhXVA", type: "public-key" }],
+        allowCredentials: [{ id: rawId, type: "public-key" }],
     });
 
     if (!assertion) {
@@ -334,7 +330,7 @@ async function signUserOp(){
 
     console.log({ sig });
 
-    let encodedSig = ethers.utils.defaultAbiCoder.encode(
+    let encodedSig = abiCoder.encode(
         ["uint256", "uint256", "bytes", "string", "string"],
         [
             sig.r,
@@ -345,8 +341,9 @@ async function signUserOp(){
         ]
     );
    const signature = encodedSig;
+   console.log({ signature });
+   return signature;
 
-    console.log({ signature });
 }
 const isPasskeySupported = Passkey.isSupported();
 

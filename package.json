@@ -22,7 +22,7 @@
     "@shopify/react-native-skia": "^1.7.6",
     "axios": "^1.7.9",
     "cbor-web": "^10.0.3",
-    "ethers": "^5.7.2",
+    "ethers": "^6.13.4",
     "expo": "^52.0.25",
     "expo-blur": "~14.0.1",
     "expo-constants": "~17.0.3",
