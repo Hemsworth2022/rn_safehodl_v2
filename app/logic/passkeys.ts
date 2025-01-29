@@ -1,6 +1,5 @@
 import { Buffer } from "buffer";
-import { ethers, AbiCoder } from "ethers";
-const abiCoder = new AbiCoder();
+import { ethers } from "ethers";
 import { randomBytes } from 'react-native-randombytes';
 import {
   Passkey,
@@ -335,7 +334,7 @@ async function signUserOp(){
 
     console.log({ sig });
 
-    let encodedSig = abiCoder.encode(
+    let encodedSig = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "uint256", "bytes", "string", "string"],
         [
             sig.r,

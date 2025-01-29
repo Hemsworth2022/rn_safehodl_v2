@@ -21,6 +21,9 @@ export default function MyComponent() {
   const { saveData:saveAccountAddress, removeData: removeAccountAddress } = useSecureStore(
     ACCOUNT_ADDRESS_STORAGE_KEY
   );
+  const { saveData:savePasskeyData } = useSecureStore(
+    PASSKEY_STORAGE_KEY
+  );
 
   const [searchQuery, setSearchQuery] = React.useState('');
   const router = useRouter();
@@ -34,6 +37,7 @@ export default function MyComponent() {
       try {
           const estimateAddress = await getEstimateAddress(params.rawId, [params.x, params.y]);
           console.log({estimateAddress});
+          savePasskeyData(JSON.stringify({rawId:params.rawId,pubkeyCoordinates: {x: params.x,y: params.y}}));
           saveAccountAddress(estimateAddress);
       } catch (error) {
           console.error('Error fetching contract address:', error);

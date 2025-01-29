@@ -31,6 +31,7 @@ const SetWalletName = () => {
       if (passkeyData) {
         const publickData = await toBackendFormat(passkeyData);
         publickDataJson = JSON.parse(publickData);
+        console.log(publickDataJson);
         const response = await storePubkey(text, publickDataJson['rawId'],publickDataJson['pubkeyCoordinates']['x'], publickDataJson['pubkeyCoordinates']['y'])
       }
       setTimeout(() => {

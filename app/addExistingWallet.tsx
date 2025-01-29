@@ -16,6 +16,7 @@ export default function AddExistingWallet() {
       if(passkeyData){
         console.log(passkeyData.rawId);
         const publicKeyResponse = await getPubkeys(passkeyData.rawId);
+        console.log(publicKeyResponse.data);
         router.push({
           pathname: '/dashboard',
           params: {userName: publicKeyResponse.data.name, rawId: publicKeyResponse.data.rawId, x: publicKeyResponse.data.pubkeyX,  y: publicKeyResponse.data.pubkeyY},
