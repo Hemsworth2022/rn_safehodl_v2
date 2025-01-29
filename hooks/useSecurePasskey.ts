@@ -7,7 +7,7 @@ export const ACCOUNT_ADDRESS_STORAGE_KEY = "account_address";
 export const HISTORY_STORAGE_KEY = "history";
 
 export function useSecureStore(key: string) {
-  const [data, setData] = useState<string | undefined>();
+  const [data, setData] = useState<any>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
 
