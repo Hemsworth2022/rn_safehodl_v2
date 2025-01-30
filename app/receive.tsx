@@ -1,15 +1,21 @@
 import React from 'react';
-import { View, StyleSheet,  } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import { Button, IconButton, MD3Colors, Text } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
+
+import * as Clipboard from 'expo-clipboard'; 
 
 import { useSecureStore } from "../hooks/useSecurePasskey";
 import { ACCOUNT_ADDRESS_STORAGE_KEY } from "../hooks/useSecurePasskey";
 
 export default function ReceiveScreen() {
-  const { data:address } = useSecureStore(
-    ACCOUNT_ADDRESS_STORAGE_KEY
-  );
+  const { data:address } = useSecureStore(ACCOUNT_ADDRESS_STORAGE_KEY);
+  
+  // Handle the "Copy" button press
+  const handleCopy = () => {
+    Clipboard.setString(address); // Copy the address to clipboard
+    Alert.alert("Address copied to clipboard"); // Show a confirmation alert
+  };
 
   return (
     <View style={styles.container}>
@@ -27,38 +33,40 @@ export default function ReceiveScreen() {
         <Text style={styles.address}>{address}</Text>
       </View>
 
+      {/* Button row for Copy, Set Amount, Share */}
       <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingVertical: 10 }}>
-          <View style={{ width: 60 }}>
-            <IconButton
-              icon="content-copy"
-              iconColor={MD3Colors.primary0}
-              animated={true}
-              size={30}
-              mode="contained-tonal"
-            />
+        <View style={{ width: 60 }}>
+          <IconButton
+            icon="content-copy"
+            iconColor={MD3Colors.primary0}
+            animated={true}
+            size={30}
+            mode="contained-tonal"
+            onPress={handleCopy} // Trigger the copy action
+          />
             <Text variant='labelLarge' style={{ textAlign: 'center' }}>Copy</Text>
-          </View>
-          <View style={{ width: 100, alignContent: 'center', alignItems: 'center' }}>
-            <IconButton
-              icon="cash"
-              iconColor={MD3Colors.primary0}
-              animated={true}
-              size={30}
-              mode="contained-tonal"
-            />
-            <Text variant='labelLarge' style={{ textAlign: 'center' }}>Set Amount</Text>
-          </View>
-          <View style={{ width: 60 }}>
-            <IconButton
-              icon="share-variant"
-              iconColor={MD3Colors.primary0}
-              animated={true}
-              size={30}
-              mode="contained-tonal"
-            />
-            <Text variant='labelLarge' style={{ textAlign: 'center' }}>Share</Text>
-          </View>
         </View>
+        <View style={{ width: 100, alignContent: 'center', alignItems: 'center' }}>
+          <IconButton
+            icon="cash"
+            iconColor={MD3Colors.primary0}
+            animated={true}
+            size={30}
+            mode="contained-tonal"
+          />
+            <Text variant='labelLarge' style={{ textAlign: 'center' }}>Set Amount</Text>
+        </View>
+        <View style={{ width: 60 }}>
+          <IconButton
+            icon="share-variant"
+            iconColor={MD3Colors.primary0}
+            animated={true}
+            size={30}
+            mode="contained-tonal"
+          />
+            <Text variant='labelLarge' style={{ textAlign: 'center' }}>Share</Text>
+        </View>
+      </View>
 
       {/* Deposit from Exchange */}
       <View style={styles.depositBox}>
