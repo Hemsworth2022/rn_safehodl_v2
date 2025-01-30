@@ -9,7 +9,7 @@ import {
     ENTRYPOINT,
     PAYMASTER_ADDRESS,
     SECP256R1_VERIFIER,
-    LOUICE_FACTORY
+    SAFEHODL_FACTORY
 } from './chainInfo';
 
 import {fetchERC20Balance} from './userInfo';
@@ -53,7 +53,7 @@ async function getChainDetails(web3: Web3) {
     console.log({userOpProvider});
     return {
       userOpProvider,
-      LOUICE_FACTORY,
+      SAFEHODL_FACTORY,
       entryContract: new web3.eth.Contract(Entrypoint.abi as any, ENTRYPOINT),
     };
 }
@@ -207,7 +207,7 @@ export const signAndSubmitUserOp = async(web3:any, rawId:string, userOp:UserOper
 
 const createUserOp = async (web3:any, walletAddress:HexString, rawId:string, publicKeys:any[], callData:any, executeParams:any[], paymasterAndData:any, feeAsset:TokenKey) => {
     console.log('createTx function calling...');
-    const {userOpProvider, LOUICE_FACTORY, entryContract} = await getChainDetails(web3);
+    const {userOpProvider, SAFEHODL_FACTORY, entryContract} = await getChainDetails(web3);
     try {
         console.log('createTx function calling... try');
         const prefix = "0x04";
@@ -215,7 +215,7 @@ const createUserOp = async (web3:any, walletAddress:HexString, rawId:string, pub
 
         const encodedFunctionCall = web3.eth.abi.encodeFunctionCall(TransactionAbi.createAccountABI, [SECP256R1_VERIFIER ,publicKey, SALT]);
 
-        var initCode = LOUICE_FACTORY + encodedFunctionCall.slice(2);
+        var initCode = SAFEHODL_FACTORY + encodedFunctionCall.slice(2);
         console.log({initCode});
         const sender = await getSenderAddress(entryContract, initCode);
         console.log({ sender });

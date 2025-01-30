@@ -54,7 +54,7 @@ export type WebauthPublicKey = {
 };
 
 export const rp = {
-    id: "userapi.beldex.dev",    // proper name web->domain, mobile->from attestation url
+    id: "safehodl.beldex.dev",    // proper name web->domain, mobile->from attestation url
     name: "safehodl.dev",
 };
   
