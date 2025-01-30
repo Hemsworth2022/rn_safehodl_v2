@@ -21,6 +21,7 @@ const CryptoDetails = () => {
   const [balance, setBalance] = React.useState<number>(0);
 
   // History for the user
+  const [hisData, setHisData] = React.useState<any[]>([]);
   const [historyKey, setHistoryKey] = React.useState(HISTORY_STORAGE_KEY);
   const { data: historyData, loadData: loadHistoryData } = useSecureStore(historyKey);
 
@@ -68,7 +69,10 @@ const CryptoDetails = () => {
     loadHistoryData();
   }, [historyKey]);
   React.useEffect(() => {
-    console.log('historyData ', historyData)
+    if(historyData) {
+      console.log('historyData ', JSON.parse(historyData))
+      setHisData(JSON.parse(historyData))
+    }
   }, [historyData]);
 
   const handleHistory = async () => {
@@ -78,7 +82,7 @@ const CryptoDetails = () => {
 
   const openHashTransaction = (hash: string) => {
     // construct the url
-    Linking.openURL("https://www.google.com").catch((err) =>
+    Linking.openURL(`https://amoy.polygonscan.com/tx/${hash}`).catch((err) =>
       console.error('Failed to open URL:', err)
     );
 
@@ -125,7 +129,7 @@ const CryptoDetails = () => {
             Recent Activities:
           </Text>
           <List.Section>
-            {historyData && historyData.map((data: any) => <List.Item
+          {hisData && hisData.length > 0  && hisData.map((data: any) => <List.Item
               style={{ backgroundColor: '#03030305', marginHorizontal: 15, borderRadius: 2, borderWidth:0.2 }}
               // left={() => <Avatar.Icon size={40} style={{ marginHorizontal: 5 }} icon="shield-edit-outline" />}
 
@@ -134,6 +138,7 @@ const CryptoDetails = () => {
               //   size={25}
               //   style={{ margin: 0 }}
               // />}
+              key={data}
               onPress={() => openHashTransaction(data)}
 
               title={data} />)}
@@ -142,8 +147,8 @@ const CryptoDetails = () => {
         {/* <View style={{ flex: 1, height: '100%' }}></View>
         <Button mode="contained" style={{ width: 150 }} onPress={handleHistory}>
           History
-        </Button> */}
-      </View>
+        </Button>*/}
+      </View> 
       <BottomDrawer title={params.title} />
     </View>
 

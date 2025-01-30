@@ -7,7 +7,7 @@ export const ACCOUNT_ADDRESS_STORAGE_KEY = "account_address";
 export const HISTORY_STORAGE_KEY = "history";
 
 export function useSecureStore(key: string) {
-  const [data, setData] = useState<any>();
+  const [data, setData] = useState<any | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
 
@@ -41,17 +41,19 @@ export function useSecureStore(key: string) {
   const saveHistoryData = async (newData: string) => {
     try {
       let history: string[] = [];
-
+      console.log({key})
+      const storedData = await SecureStore.getItemAsync(key);
+      console.log({storedData});
       // Check if `data` exists and parse it
-      if (data) {
-        history = JSON.parse(data);
+      if (storedData) {
+        history = JSON.parse(storedData);
       }
   
       // Ensure `history` is an array
       if (!Array.isArray(history)) {
         history = [];
       }
-      console.log({data});
+      console.log({storedData});
       // Push new data to history
       history.push(newData);
       console.log({history});
