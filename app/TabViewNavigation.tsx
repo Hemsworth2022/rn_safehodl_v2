@@ -8,23 +8,27 @@ import { useRouter } from 'expo-router';
 const tokensData = [
   {
     "id": 1,
-    "title": "BDX",
-    "type": "COIN",
-    "description": "Bitcoin",
-    "price": "$101,234",
-    "percentageChange": "-0.14%",
-    "icon": "tray-arrow-down",
-    "color": MD3Colors.error30,
-  },
-  {
-    "id": 2,
     "title": "ETH",
     "type": "COIN",
+    "tokenAddress": "",
     "description": "Ethereum",
+    "chainId":'0xaa36a7',
     "price": "$3,200",
     "percentageChange": "+1.25%",
     "icon": "tray-arrow-up",
     "color": MD3Colors.neutral70,
+  },
+  {
+    "id": 2,
+    "title": "TT",
+    "tokenAddress": "0x6aFFb4A3a6cbb5C3c35fabEc497C81ca842b17D6",
+    "type": "TOKEN",
+    "description": "Toretto",
+    "chainId":'0xaa36a7',
+    "price": "$101,234",
+    "percentageChange": "-0.14%",
+    "icon": "tray-arrow-down",
+    "color": MD3Colors.error30,
   },
   {
     "id": 3,
@@ -32,6 +36,7 @@ const tokensData = [
     "type": "COIN",
     "tokenAddress":"",
     "description": "Amoy",
+    "chainId":"0x13882",
     "price": "$0.89",
     "percentageChange": "-2.56%",
     "icon": "tray-arrow-down",
@@ -43,6 +48,7 @@ const tokensData = [
     "type": "TOKEN",
     "tokenAddress": "0xF757Dd3123b69795d43cB6b58556b3c6786eAc13",
     "description": "Sarvy",
+    "chainId":"0x13882",
     "price": "$120",
     "percentageChange": "+0.5%",
     "icon": "tray-arrow-up",
@@ -64,7 +70,7 @@ const FirstRoute = () => {
           onPress={() => {
             router.push({
                 pathname: '/cryptoDetails',
-                params: { title: item.title, subtitle: `COIN | ${item.title} Smart Chain` , type:item.type, tokenAddress:item.tokenAddress },
+                params: { title: item.title, subtitle: `COIN | ${item.title} Smart Chain` , type:item.type, chain:item.chainId, tokenAddress:item.tokenAddress },
               });}}
           right={() => (
             <View>

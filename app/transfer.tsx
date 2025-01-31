@@ -8,12 +8,15 @@ import { Button } from 'react-native-paper';
 import { feeTokens } from '../token/feeTokens';
 import { coinList } from "../token/coinList";
 import { createUserOpETHTx, createUserOpERC20Tx, UserOperation,signAndSubmitUserOp, getUserOperationByHash } from './logic/txCreation'
+import { chainIdandType, chainInfo } from './logic/chainInfo';
 
 const TransferPage: React.FC = () => {
   const router = useRouter()
   const { toAddress, amount, currentAsset, balance } = useLocalSearchParams();
   const currentAssetJson = JSON.parse(currentAsset.toString());
 
+  const [web3, setWeb3] = React.useState<Web3 | null>(null);
+  
   // Storage keys
   const { data: address } = useSecureStore(ACCOUNT_ADDRESS_STORAGE_KEY);
   const { data: passkeyData } = useSecureStore(PASSKEY_STORAGE_KEY);
@@ -25,10 +28,18 @@ const TransferPage: React.FC = () => {
     }
   }, [address]);
 
+  //current network
+  const [chainName, setChainName] = useState<string>('');
+
   // Transaction indos
-  const [open, setOpen] = useState<boolean>(false); // State to control the dropdown open/close
-  const [feeType, setFeeType] = useState<string>('Amoy'); // Default currency
+  const [feeTokenOptions, setFeeTokenOptions] = useState<{ value: string; label: string }[]>([]);
+  const [feeType, setFeeType] = useState<string>(''); // Default currency
   const [feeAsset, setFeeAsset] = useState<{ name: string; symbol: string; type: string; decimals: number; address: string }>();
+  // const data = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
+  const data = [
+    { label: 'POL', value: 'Amoy' },
+    { label: 'SAR', value: 'Sarvy' },
+  ]
 
 
   // Transaction(userOp) details
@@ -38,26 +49,64 @@ const TransferPage: React.FC = () => {
   const [userOp, setUserOp] = useState<UserOperation>();
   const [visible, setVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>({ label: 'POL', value: 'Amoy' });
-  // const data = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
-  const data = [
-    { label: 'POL', value: 'Amoy' },
-    { label: 'SAR', value: 'Sarvy' },
-  ]
+
+  function getBundelerURL(hexChainID: keyof typeof chainIdandType) {
+    if (!(hexChainID in chainIdandType)) {
+        throw new Error(`Unsupported chain ID: ${hexChainID}`);
+    }
+    const chainType = chainIdandType[hexChainID] as keyof typeof chainInfo;
+    return chainInfo[chainType].USER_OP_RPC_URL;
+  }
+
+  //Getting web3 bundler url
+  React.useEffect(() => {
+      if (!currentAssetJson.chain) return;
+      console.log(currentAssetJson.chain.toString());
+      const web3URL = getBundelerURL(currentAssetJson.chain.toString() as keyof typeof chainIdandType);
+      setWeb3(new Web3(web3URL));
+
+      const chainId = currentAssetJson?.chain as keyof typeof chainIdandType;
+      const chainName = chainIdandType[chainId] as keyof typeof chainInfo;
+      setChainName(chainName);
+
+      // Filter tokens that match the current chain
+      const filteredTokens = feeTokens[chainName];
+      // Map to dropdown options
+      const tokenOptions = filteredTokens.map(token => ({
+        value: token.name,
+        label: token.symbol
+      }));
+      setFeeTokenOptions(tokenOptions);
+      const item = {
+        value:tokenOptions[0].value,
+        label:tokenOptions[0].label
+      }
+      setSelectedItem(item);
+      // Find default token of type 'COIN'
+      const defaultFeeType = filteredTokens.find(token => token.type === "COIN");
+      if (!defaultFeeType){
+          console.error("There is no default fee type");
+          return;
+      }
+      setFeeType(defaultFeeType?.name);
+
+  }, [currentAssetJson.chain]);
+
   //Chose feeAsset
   useEffect(() => {
     console.log('feeType', feeType);
-    if (!feeType) return;
+    if (!feeType || !chainName) return;
 
-    const filteredTokens = feeTokens['Amoy'];
+    const filteredTokens = feeTokens[chainName];
     const token = filteredTokens.find(token => token.name === feeType);
     console.log('feeAsset', token);
     setFeeAsset(token);
-  }, [feeType])
+  }, [feeType,chainName])
 
   // calculate aprox fees
   useEffect(() => {
     console.log('next useEffect is called', feeType, feeAsset, address, toAddress)
-    if (!feeAsset || !address || !toAddress || !passkeyData) return;
+    if (!feeAsset || !address || !toAddress || !passkeyData || !web3) return;
     // console.log('next useEffect is called',feeType,feeAsset)
     setAproxFee('');
     setUserOp(undefined);
@@ -65,7 +114,6 @@ const TransferPage: React.FC = () => {
     if (!feeAsset)
       return;
     let response: any = '';
-    const web3: Web3 = new Web3('https://bundler.beldex.dev/rpc');
     const passkeyDataJson = JSON.parse(passkeyData);
     const getUserOperation = async () => {
       if (currentAssetJson.type === 'COIN') {
@@ -107,7 +155,7 @@ const TransferPage: React.FC = () => {
     }
 
     getUserOperation();
-  }, [feeAsset, address, passkeyData]);
+  }, [feeAsset, address, passkeyData, web3]);
 
   // Sign and Submit the UserOp
   const handleSubmit = async () => {
@@ -119,7 +167,6 @@ const TransferPage: React.FC = () => {
     if(!userOp || !passkeyData)
         return;
     
-    const web3: Web3 = new Web3('https://bundler.beldex.dev/rpc');
     const response = await signAndSubmitUserOp(web3, JSON.parse(passkeyData).rawId, userOp);
     if (!response.error) {
         console.log('getUserOperationByHash function calling ...');
@@ -137,7 +184,7 @@ const TransferPage: React.FC = () => {
                         saveHistory(result.transaction);
                         router.push({
                             pathname: '/cryptoDetails',
-                            params: { title: currentAssetJson.title, subtitle: `COIN | ${currentAssetJson.title} Smart Chain` , type:currentAssetJson.type, tokenAddress:currentAssetJson.tokenAddress },
+                            params: { title: currentAssetJson.title, subtitle: `COIN | ${currentAssetJson.title} Smart Chain` , type:currentAssetJson.type, chain:currentAssetJson.chainId, tokenAddress:currentAssetJson.tokenAddress },
                           });
                     }
                     // await handleAddTransaction(result.status, result);
@@ -211,7 +258,7 @@ const TransferPage: React.FC = () => {
                   borderRadius: 10,
                 }}>
                 <FlatList
-                  data={data}
+                  data={feeTokenOptions}
                   keyExtractor={(item) => item.value}
                   renderItem={({ item }) => (
                     <TouchableOpacity onPress={() => handleSelect(item)}>

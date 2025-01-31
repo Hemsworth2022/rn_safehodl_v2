@@ -6,6 +6,13 @@ export const feeTokens: Record<string, { name: string; symbol: string; type: str
             type: 'COIN',
             decimals: 18,
             address: ''
+        },
+        {
+            name: 'Toretto',
+            symbol: 'TT',
+            type: 'TOKEN',
+            decimals: 18,
+            address: '0x6aFFb4A3a6cbb5C3c35fabEc497C81ca842b17D6'
         }
     ],
     Amoy: [

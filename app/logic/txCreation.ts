@@ -7,7 +7,6 @@ import {
     chainInfo,
     SALT,
     ENTRYPOINT,
-    PAYMASTER_ADDRESS,
     SECP256R1_VERIFIER,
     SAFEHODL_FACTORY
 } from './chainInfo';
@@ -50,10 +49,11 @@ async function getChainDetails(web3: Web3) {
     const userOpProvider = new ethers.JsonRpcProvider(
       chainInfo[chainType].USER_OP_RPC_URL
     );
+    const PAYMASTER_ADDRESS = chainInfo[chainType].PAYMASTER_ADDRESS;
     console.log({userOpProvider});
     return {
       userOpProvider,
-      SAFEHODL_FACTORY,
+      PAYMASTER_ADDRESS,
       entryContract: new web3.eth.Contract(Entrypoint.abi as any, ENTRYPOINT),
     };
 }
@@ -124,11 +124,6 @@ export const getUserOperationByHash = async (web3:any, opHash:HexString, delay =
     return response;
 };
 
-const personalSignIn = async (userOpHash:any, rawId:string) => {
-    const signature = await signUserOperation(userOpHash, rawId)
-    return signature;
-};
-
 // Utility to check if an address is a contract
 async function isContract(web3: Web3, address: HexString): Promise<boolean> {
     try {
@@ -152,14 +147,22 @@ const isApiResponseError = async (response:object) => {
     return false;
 };
 
+// Utility to get only chain ID
+async function getChainID(web3: Web3) {
+    const chainID = await web3.eth.getChainId();
+    return chainID.toString(); 
+}
+
 //Paymaster Process
-const getExchangeRate = async (ERC20_contract:any) => {
+const getExchangeRate = async (web3:Web3,ERC20_contract:any) => {
     console.log("getExchangeRate(contract address)", ERC20_contract);
+    const chainId = await getChainID(web3); 
+
     const pm_data = {
         jsonrpc: "2.0",
         id: "0",
         method: "pm_getApprovedTokens",
-        params:{}
+        params:{chainId: chainId}
     }
     const response = await axios.post('https://paymaster.beldex.dev/paymaster', pm_data, {
         headers: { 'Content-Type': 'application/json' }
@@ -169,14 +172,17 @@ const getExchangeRate = async (ERC20_contract:any) => {
     return tokens.find((token: any)  => token.address.toLowerCase() === ERC20_contract.toLowerCase());
 }
 
-async function getSponserFromPaymaster(userOp:any, ERC20_contract:HexString) {
+async function getSponserFromPaymaster(web3:Web3, userOp:any, ERC20_contract:HexString) {
+    const chainId = await getChainID(web3); 
+
     const pm_data = {
         jsonrpc: "2.0",
         id: "0",
         method: "pm_sponsorUserOperation",
         params:{
           request: userOp,
-          token_address: ERC20_contract
+          token_address: ERC20_contract,
+          chainId: chainId
         }
       }
       const response = await axios.post('https://paymaster.beldex.dev/paymaster', pm_data, {
@@ -207,7 +213,7 @@ export const signAndSubmitUserOp = async(web3:any, rawId:string, userOp:UserOper
 
 const createUserOp = async (web3:any, walletAddress:HexString, rawId:string, publicKeys:any[], callData:any, executeParams:any[], paymasterAndData:any, feeAsset:TokenKey) => {
     console.log('createTx function calling...');
-    const {userOpProvider, SAFEHODL_FACTORY, entryContract} = await getChainDetails(web3);
+    const {userOpProvider, PAYMASTER_ADDRESS, entryContract} = await getChainDetails(web3);
     try {
         console.log('createTx function calling... try');
         const prefix = "0x04";
@@ -274,7 +280,7 @@ const createUserOp = async (web3:any, walletAddress:HexString, rawId:string, pub
                 console.log("Paymaster and data provided");
                 console.log({executeParams});
                 const additionalGas = window.BigInt(35000);
-                const {exchangeRate} = await getExchangeRate(executeParams[3]);
+                const {exchangeRate} = await getExchangeRate(web3, executeParams[3]);
                 console.log("exchangeRate",exchangeRate);
                 const totalGas = window.BigInt(userOp.preVerificationGas) + window.BigInt(userOp.verificationGasLimit) + window.BigInt(userOp.callGasLimit)
                 const actualTokenCost = ((totalGas * window.BigInt(maxFeePerGas) + (additionalGas * window.BigInt(maxFeePerGas))) * window.BigInt(exchangeRate)) / window.BigInt(1e18);
@@ -283,15 +289,15 @@ const createUserOp = async (web3:any, walletAddress:HexString, rawId:string, pub
                 console.log("Transaction actualTokenCost :", requiredFee);
                 
                 const chainID = await web3.eth.getChainId();
-                const hexChainID = `0x${chainID.toString(16)}` as keyof typeof chainIdandType;
-                const balance =  await fetchERC20Balance(walletAddress, feeAsset.address);
+                console.log({chainID});
+                const balance =  await fetchERC20Balance(web3, walletAddress, feeAsset.address);
                 if(requiredFee > balance)
                 return { error: true, message: `Insufficient balance. need ${requiredFee} ${feeAsset.symbol} available ${balance} ${feeAsset.symbol}`};
     
                 const approveData = await web3.eth.abi.encodeFunctionCall(TransactionAbi.ERC20Approve, [PAYMASTER_ADDRESS, actualTokenCost]);
                 userOp.callData = await web3.eth.abi.encodeFunctionCall(TransactionAbi.executeABI, [executeParams[0], executeParams[1], executeParams[2], executeParams[3], approveData]);
                 
-                const paymasterData = await getSponserFromPaymaster(userOp, executeParams[3]);
+                const paymasterData = await getSponserFromPaymaster(web3, userOp, executeParams[3]);
                 if(paymasterData.error)
                     return { error: true, message: `${paymasterData.error?.message}. need ${requiredFee} ${feeAsset.symbol} available ${balance} ${feeAsset.symbol}` || "Failed to get paymasterData."};
     
@@ -321,6 +327,7 @@ export const createUserOpETHTx = async (web3:any, walletAddress:HexString, rawId
     }
     else{
         console.log("ERC20 as a fee transaction",feeAsset)
+        const{PAYMASTER_ADDRESS} = await getChainDetails(web3)
         const ERC20_contract = feeAsset.address;
         console.log({ERC20_contract});
         const dummyAmount = 1 * (10 ** feeAsset.decimals);
@@ -347,6 +354,7 @@ export const createUserOpERC20Tx = async (web3:any, walletAddress:HexString, raw
     }
     else{
         console.log("ERC20 as a fee transaction",feeAsset)
+        const{PAYMASTER_ADDRESS} = await getChainDetails(web3)
         const ERC20_contract = feeAsset.address;
         console.log({ERC20_contract});
         const dummyAmount = 1 * (10 ** feeAsset.decimals);

@@ -13,6 +13,13 @@ export const coinList: Record<string, { name: string; symbol: string; type: stri
             type: 'TOKEN',
             decimals: 8,
             address: '0x6dbA02d1A9f8248aCe5fFE63a0d75e98C157a430'
+        },
+        {
+            name: 'Toretto',
+            symbol: 'TT',
+            type: 'TOKEN',
+            decimals: 18,
+            address: '0x6aFFb4A3a6cbb5C3c35fabEc497C81ca842b17D6'
         }
     ],
     Amoy: [

@@ -1,6 +1,8 @@
 
 import { Text, BottomNavigation, Appbar, Avatar, IconButton, Provider as PaperProvider, Button, Icon, MD3Colors, Divider, Provider, List } from 'react-native-paper';
 import React from 'react';
+import Web3 from 'web3';
+
 import { View, StyleSheet, FlatList, ScrollView, Linking } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import BottomDrawer from './BottomDrawer'
@@ -10,10 +12,12 @@ import TradeChart from './TradeChart';
 import { useSecureStore } from "../hooks/useSecurePasskey";
 import { ACCOUNT_ADDRESS_STORAGE_KEY, HISTORY_STORAGE_KEY } from "../hooks/useSecurePasskey";
 import { fetchBalance, fetchERC20Balance } from './logic/userInfo'
+import { chainIdandType, chainInfo } from './logic/chainInfo';
 
 const CryptoDetails = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const [web3, setWeb3] = React.useState<Web3 | null>(null);
 
   const { data: address } = useSecureStore(
     ACCOUNT_ADDRESS_STORAGE_KEY
@@ -25,17 +29,33 @@ const CryptoDetails = () => {
   const [historyKey, setHistoryKey] = React.useState(HISTORY_STORAGE_KEY);
   const { data: historyData, loadData: loadHistoryData } = useSecureStore(historyKey);
 
+  function getBundelerURL(hexChainID: keyof typeof chainIdandType) {
+    if (!(hexChainID in chainIdandType)) {
+        throw new Error(`Unsupported chain ID: ${hexChainID}`);
+    }
+    const chainType = chainIdandType[hexChainID] as keyof typeof chainInfo;
+    return chainInfo[chainType].USER_OP_RPC_URL;
+  }
+
+  //Getting web3 bundler url
+  React.useEffect(() => {
+      if (!params.chain) return;
+      console.log(params.chain.toString());
+      const web3URL = getBundelerURL(params.chain.toString() as keyof typeof chainIdandType);
+      setWeb3(new Web3(web3URL));
+  }, [params.chain]);
+
   //Fetching the balance
   React.useEffect(() => {
     // console.log('fetching balance for user address',address,params.tokenAddress)
-    if (!address || !params) return;
+    if (!address || !params || !web3) return;
 
     const balance = async (address: string) => {
       var fetchedBalance = 0;
       if (params.type === "COIN")
-        fetchedBalance = await fetchBalance(address);
+        fetchedBalance = await fetchBalance(web3, address);
       else
-        fetchedBalance = await fetchERC20Balance(address, Array.isArray(params.tokenAddress) ? params.tokenAddress[0] : params.tokenAddress);
+        fetchedBalance = await fetchERC20Balance(web3, address, Array.isArray(params.tokenAddress) ? params.tokenAddress[0] : params.tokenAddress);
 
       setBalance(fetchedBalance);
       console.log({ fetchedBalance });
@@ -54,8 +74,12 @@ const CryptoDetails = () => {
         clearInterval(intervalId);
       }
     };
-  }, [address, params]);
+  }, [address, params, web3]);
 
+  React.useEffect(()=>{
+    console.log({balance});
+
+  },[balance])
   // Update history key and load history data
   React.useEffect(() => {
     if (address) {
@@ -75,12 +99,8 @@ const CryptoDetails = () => {
     }
   }, [historyData]);
 
-  const handleHistory = async () => {
-    console.log('historykey is', historyKey)
-    console.log('hisotry is ', historyData)
-  }
-
   const openHashTransaction = (hash: string) => {
+    console.log("pressed");
     // construct the url
     Linking.openURL(`https://amoy.polygonscan.com/tx/${hash}`).catch((err) =>
       console.error('Failed to open URL:', err)
